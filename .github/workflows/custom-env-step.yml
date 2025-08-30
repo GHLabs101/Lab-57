@@ -1,0 +1,50 @@
+name: Lab 57 - Custom Env to Step
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+
+# Workflow-level env (lowest custom scope)
+env:
+  APP_NAME: "lab57-app"
+  API_BASE: "https://example.internal/api"
+
+jobs:
+  demo:
+    runs-on: ubuntu-latest
+
+    # Job-level env (overrides workflow-level when keys collide)
+    env:
+      STAGE: "dev"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Step-level env (highest precedence)
+        env:
+          FEATURE_FLAG: "on"
+          # Compose a value using an expression at definition time
+          ENDPOINT: "${{ env.API_BASE }}/v1"
+        shell: bash
+        run: |
+          echo "APP_NAME=${APP_NAME}"         # from workflow env
+          echo "STAGE=${STAGE}"               # from job env
+          echo "FEATURE_FLAG=${FEATURE_FLAG}" # from step env
+          echo "ENDPOINT=${ENDPOINT}"         # composed via expression, consumed via shell
+
+      - name: Compute short SHA (make it a step output)
+        id: sha
+        shell: bash
+        run: |
+          SHORT="${GITHUB_SHA::7}"
+          echo "short=${SHORT}" >> "$GITHUB_OUTPUT"
+
+      - name: Use custom env that includes short SHA
+        env:
+          BUILD_TAG: "lab57-${{ github.run_number }}-${{ steps.sha.outputs.short }}"
+        shell: bash
+        run: |
+          echo "BUILD_TAG=${BUILD_TAG}"
+
