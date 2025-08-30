@@ -48,3 +48,23 @@ jobs:
         run: |
           echo "BUILD_TAG=${BUILD_TAG}"
 
+      - name: Upload artifact using env in inputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.APP_NAME }}-${{ env.STAGE }}-${{ steps.sha.outputs.short }}
+          path: README.md
+        # Note: 'with:' uses expressions, not shell $VAR
+
+      - name: Read env inside an action (github-script)
+        uses: actions/github-script@v7
+        env:
+          FEATURE_FLAG: "on"
+          BUILD_TAG: "lab57-${{ github.run_number }}-${{ steps.sha.outputs.short }}"
+        with:
+          script: |
+            const flag = process.env.FEATURE_FLAG;
+            const tag  = process.env.BUILD_TAG;
+            core.notice(`Feature flag = ${flag}`);
+            core.notice(`Build tag    = ${tag}`);
+
+
