@@ -11,6 +11,34 @@ env:
   API_BASE: "https://example.internal/api"
 
 jobs:
+  demo-windows:
+    runs-on: windows-latest
+    env:
+      APP_NAME: "lab57-app"
+      STAGE: "dev"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Step-level env and short SHA (pwsh)
+        id: win
+        shell: pwsh
+        env:
+          FEATURE_FLAG: "on"
+        run: |
+          $short = $env:GITHUB_SHA.Substring(0,7)
+          "short=$short" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          Write-Output "APP_NAME=$env:APP_NAME"
+          Write-Output "STAGE=$env:STAGE"
+          Write-Output "FEATURE_FLAG=$env:FEATURE_FLAG"
+
+      - name: Use env in action input (upload-artifact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.APP_NAME }}-${{ env.STAGE }}-${{ steps.win.outputs.short }}
+          path: README.md
+
   demo:
     runs-on: ubuntu-latest
 
